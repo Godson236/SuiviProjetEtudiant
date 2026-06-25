@@ -137,4 +137,32 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
+        from rest_framework.views import APIView
+
+class StatistiquesView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role == 'administrateur':
+            data = {
+                'total_projets': Projet.objects.count(),
+                'total_taches': Tache.objects.count(),
+                'total_livrables': Livrable.objects.count(),
+                'total_evaluations': Evaluation.objects.count(),
+                'total_utilisateurs': User.objects.count(),
+            }
+        elif user.role == 'enseignant':
+            data = {
+                'total_projets': Projet.objects.count(),
+                'total_livrables': Livrable.objects.count(),
+                'total_evaluations': Evaluation.objects.filter(enseignant=user).count(),
+            }
+        else:
+            data = {
+                'mes_projets': Projet.objects.filter(createur=user).count(),
+                'mes_taches': Tache.objects.filter(assigne_a=user).count(),
+                'mes_livrables': Livrable.objects.filter(soumis_par=user).count(),
+            }
+        return Response(data)
         serializer.save(enseignant=self.request.user)

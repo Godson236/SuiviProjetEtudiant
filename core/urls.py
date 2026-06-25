@@ -11,4 +11,5 @@ router.register(r'evaluations', views.EvaluationViewSet, basename='evaluation')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('statistiques/', views.StatistiquesView.as_view(), name='statistiques'),
 ]
