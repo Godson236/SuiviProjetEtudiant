@@ -52,6 +52,10 @@ class LivrableSerializer(serializers.ModelSerializer):
 
 class EvaluationSerializer(serializers.ModelSerializer):
     enseignant_detail = UserMiniSerializer(source='enseignant', read_only=True)
+    def validate_note(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La note doit etre entre 0 et 20.")
+        return value
 
     class Meta:
         model = Evaluation
