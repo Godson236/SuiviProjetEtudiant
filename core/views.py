@@ -89,6 +89,15 @@ class TacheViewSet(viewsets.ModelViewSet):
             return [EstEtudiantOuAdmin()]
         return [permissions.IsAuthenticated()]
 
+    def perform_create(self, serializer):
+        serializer.save()
+
+    @action(detail=False, methods=['get'])
+    def mes_taches(self, request):
+        taches = Tache.objects.filter(assigne_a=request.user)
+        serializer = self.get_serializer(taches, many=True)
+        return Response(serializer.data)
+
 
 class LivrableViewSet(viewsets.ModelViewSet):
     serializer_class = LivrableSerializer
