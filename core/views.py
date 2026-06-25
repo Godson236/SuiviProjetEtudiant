@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import User, Projet, Tache, Livrable, Evaluation
 from .serializers import (
     UserSerializer, ProjetSerializer,
@@ -57,7 +58,7 @@ class ProjetViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(id=user_id)
             projet.membres.add(user)
-            return Response({'message': f'{user.username} ajouté au projet.'})
+            return Response({'message': f'{user.username} ajoute au projet.'})
         except User.DoesNotExist:
             return Response({'error': 'Utilisateur introuvable.'}, status=404)
 
@@ -68,7 +69,7 @@ class ProjetViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(id=user_id)
             projet.membres.remove(user)
-            return Response({'message': f'{user.username} retiré du projet.'})
+            return Response({'message': f'{user.username} retire du projet.'})
         except User.DoesNotExist:
             return Response({'error': 'Utilisateur introuvable.'}, status=404)
 
@@ -125,9 +126,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'administrateur':
-            return Evaluation.objects.all()
-        if user.role == 'enseignant':
+        if user.role in ['administrateur', 'enseignant']:
             return Evaluation.objects.all()
         return Evaluation.objects.filter(livrable__soumis_par=user)
 
@@ -137,7 +136,8 @@ class EvaluationViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        from rest_framework.views import APIView
+        serializer.save(enseignant=self.request.user)
+
 
 class StatistiquesView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -165,4 +165,3 @@ class StatistiquesView(APIView):
                 'mes_livrables': Livrable.objects.filter(soumis_par=user).count(),
             }
         return Response(data)
-        serializer.save(enseignant=self.request.user)
