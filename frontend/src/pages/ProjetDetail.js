@@ -1,181 +1,190 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import API from '../api';
-import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import API from "../api";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 const ProjetDetail = () => {
   const { id } = useParams();
   const [projet, setProjet] = useState(null);
-  const [titreTache, setTitreTache] = useState('');
-  const [descTache, setDescTache] = useState('');
-  const [priorite, setPriorite] = useState('moyenne');
+  const [titreTache, setTitreTache] = useState("");
+  const [descTache, setDescTache] = useState("");
+  const [priorite, setPriorite] = useState("moyenne");
   const [showForm, setShowForm] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchProjet();
-  }, [id]);
+  useEffect(() => { fetchProjet(); }, [id]);
 
   const fetchProjet = async () => {
     try {
       const res = await API.get(`/projets/${id}/`);
       setProjet(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleCreateTache = async (e) => {
     e.preventDefault();
     try {
-      await API.post('/taches/', {
-        titre: titreTache,
-        description: descTache,
-        priorite,
-        projet: id,
-      });
-      setTitreTache('');
-      setDescTache('');
-      setShowForm(false);
+      await API.post("/taches/", { titre: titreTache, description: descTache, priorite, projet: id });
+      setTitreTache(""); setDescTache(""); setShowForm(false);
       fetchProjet();
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleStatutTache = async (tacheId, statut) => {
     try {
       await API.patch(`/taches/${tacheId}/`, { statut });
       fetchProjet();
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const getPrioriteColor = (p) => {
-    if (p === 'haute') return '#e53e3e';
-    if (p === 'moyenne') return '#ed8936';
-    return '#48bb78';
+  const getPrioriteStyle = (p) => {
+    if (p === "haute") return { color: "#f64f59", bg: "rgba(246,79,89,0.15)", border: "rgba(246,79,89,0.3)" };
+    if (p === "moyenne") return { color: "#f7971e", bg: "rgba(247,151,30,0.15)", border: "rgba(247,151,30,0.3)" };
+    return { color: "#43e97b", bg: "rgba(67,233,123,0.15)", border: "rgba(67,233,123,0.3)" };
   };
 
-  const getStatutColor = (s) => {
-    if (s === 'terminee') return '#48bb78';
-    if (s === 'en_cours') return '#4299e1';
-    return '#a0aec0';
+  const getStatutStyle = (s) => {
+    if (s === "terminee") return { color: "#43e97b", bg: "rgba(67,233,123,0.15)" };
+    if (s === "en_cours") return { color: "#4facfe", bg: "rgba(79,172,254,0.15)" };
+    return { color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.05)" };
   };
 
-  if (!projet) return <div><Navbar /><p style={{padding:'24px'}}>Chargement...</p></div>;
+  if (!projet) return (
+    <div style={{ minHeight: "100vh", background: "#0a0a1a" }}>
+      <Navbar />
+      <p style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", padding: "60px" }}>Chargement...</p>
+    </div>
+  );
 
   return (
-    <div>
+    <div style={{ minHeight: "100vh", background: "#0a0a1a" }}>
       <Navbar />
-      <div style={styles.container}>
-        <h1 style={styles.title}>📁 {projet.titre}</h1>
-        <p style={styles.desc}>{projet.description}</p>
+      <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
 
-        <div style={styles.info}>
-          <span>👤 Créateur : <strong>{projet.createur_detail?.username}</strong></span>
-          <span>📌 Statut : <strong>{projet.statut}</strong></span>
-          <span>👥 Membres : <strong>{projet.membres_detail?.length}</strong></span>
+        <button
+          onClick={() => navigate("/projets")}
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", marginBottom: "24px", fontSize: "13px" }}
+        >
+          Retour aux projets
+        </button>
+
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "28px", marginBottom: "24px" }}>
+          <h1 style={{ color: "white", margin: "0 0 8px", fontSize: "26px", fontWeight: "700" }}>{projet.titre}</h1>
+          <p style={{ color: "rgba(255,255,255,0.5)", marginBottom: "20px" }}>{projet.description}</p>
+          <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
+            <div style={{ background: "rgba(79,172,254,0.1)", border: "1px solid rgba(79,172,254,0.2)", borderRadius: "10px", padding: "12px 20px", textAlign: "center" }}>
+              <p style={{ color: "#4facfe", fontSize: "20px", fontWeight: "700", margin: 0 }}>{projet.taches?.length || 0}</p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "4px 0 0" }}>Taches</p>
+            </div>
+            <div style={{ background: "rgba(67,233,123,0.1)", border: "1px solid rgba(67,233,123,0.2)", borderRadius: "10px", padding: "12px 20px", textAlign: "center" }}>
+              <p style={{ color: "#43e97b", fontSize: "20px", fontWeight: "700", margin: 0 }}>{projet.membres_detail?.length || 0}</p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "4px 0 0" }}>Membres</p>
+            </div>
+            <div style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "10px", padding: "12px 20px", textAlign: "center" }}>
+              <p style={{ color: "#a855f7", fontSize: "20px", fontWeight: "700", margin: 0 }}>{projet.livrables?.length || 0}</p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "4px 0 0" }}>Livrables</p>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 20px", textAlign: "center" }}>
+              <p style={{ color: "white", fontSize: "13px", fontWeight: "700", margin: 0 }}>{projet.statut}</p>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", margin: "4px 0 0" }}>Statut</p>
+            </div>
+          </div>
         </div>
 
-        <div style={styles.section}>
-          <div style={styles.sectionHeader}>
-            <h2>📋 Tâches ({projet.taches?.length})</h2>
-            {(user?.role === 'etudiant' || user?.role === 'administrateur') && (
-              <button style={styles.btnCreate} onClick={() => setShowForm(!showForm)}>
-                {showForm ? 'Annuler' : '+ Ajouter une tâche'}
+        <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "28px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <h2 style={{ color: "white", margin: 0, fontSize: "18px", fontWeight: "700" }}>
+              Taches ({projet.taches?.length || 0})
+            </h2>
+            {(user?.role === "etudiant" || user?.role === "administrateur") && (
+              <button
+                onClick={() => setShowForm(!showForm)}
+                style={{ background: "linear-gradient(135deg, #43e97b, #38f9d7)", color: "white", border: "none", padding: "8px 18px", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "700" }}
+              >
+                {showForm ? "Annuler" : "+ Ajouter une tache"}
               </button>
             )}
           </div>
 
           {showForm && (
-            <form onSubmit={handleCreateTache} style={styles.form}>
+            <form onSubmit={handleCreateTache} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "20px", marginBottom: "20px" }}>
               <input
-                style={styles.input}
-                placeholder="Titre de la tâche"
+                placeholder="Titre de la tache"
                 value={titreTache}
                 onChange={(e) => setTitreTache(e.target.value)}
                 required
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", marginBottom: "10px", boxSizing: "border-box", outline: "none" }}
               />
               <textarea
-                style={styles.textarea}
                 placeholder="Description"
                 value={descTache}
                 onChange={(e) => setDescTache(e.target.value)}
                 rows={2}
+                style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", marginBottom: "10px", boxSizing: "border-box", outline: "none" }}
               />
-              <select
-                style={styles.input}
-                value={priorite}
-                onChange={(e) => setPriorite(e.target.value)}
-              >
-                <option value="basse">Basse</option>
-                <option value="moyenne">Moyenne</option>
-                <option value="haute">Haute</option>
-              </select>
-              <button style={styles.btnSubmit} type="submit">Créer</button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <select
+                  value={priorite}
+                  onChange={(e) => setPriorite(e.target.value)}
+                  style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", outline: "none" }}
+                >
+                  <option value="basse">Basse</option>
+                  <option value="moyenne">Moyenne</option>
+                  <option value="haute">Haute</option>
+                </select>
+                <button
+                  type="submit"
+                  style={{ background: "linear-gradient(135deg, #4facfe, #00f2fe)", color: "white", border: "none", padding: "10px 20px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}
+                >
+                  Creer
+                </button>
+              </div>
             </form>
           )}
 
           {projet.taches?.length === 0 ? (
-            <p style={styles.empty}>Aucune tâche pour ce projet.</p>
+            <p style={{ color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "30px" }}>Aucune tache pour ce projet.</p>
           ) : (
-            projet.taches?.map((tache) => (
-              <div key={tache.id} style={styles.tacheCard}>
-                <div style={styles.tacheHeader}>
-                  <h4 style={styles.tacheTitre}>{tache.titre}</h4>
-                  <div style={styles.badges}>
-                    <span style={{ ...styles.badge, backgroundColor: getPrioriteColor(tache.priorite) }}>
-                      {tache.priorite}
-                    </span>
-                    <span style={{ ...styles.badge, backgroundColor: getStatutColor(tache.statut) }}>
-                      {tache.statut}
-                    </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {projet.taches?.map((tache) => {
+                const pStyle = getPrioriteStyle(tache.priorite);
+                const sStyle = getStatutStyle(tache.statut);
+                return (
+                  <div key={tache.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <h4 style={{ margin: 0, color: "white", fontSize: "15px" }}>{tache.titre}</h4>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <span style={{ background: pStyle.bg, color: pStyle.color, border: `1px solid ${pStyle.border}`, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }}>
+                          {tache.priorite}
+                        </span>
+                        <span style={{ background: sStyle.bg, color: sStyle.color, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: "600" }}>
+                          {tache.statut}
+                        </span>
+                      </div>
+                    </div>
+                    {tache.description && <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginBottom: "10px" }}>{tache.description}</p>}
+                    {(user?.role === "etudiant" || user?.role === "administrateur") && (
+                      <select
+                        value={tache.statut}
+                        onChange={(e) => handleStatutTache(tache.id, e.target.value)}
+                        style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "13px", outline: "none" }}
+                      >
+                        <option value="a_faire">A faire</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="terminee">Terminee</option>
+                      </select>
+                    )}
                   </div>
-                </div>
-                <p style={styles.tacheDesc}>{tache.description}</p>
-                {(user?.role === 'etudiant' || user?.role === 'administrateur') && (
-                  <select
-                    style={styles.select}
-                    value={tache.statut}
-                    onChange={(e) => handleStatutTache(tache.id, e.target.value)}
-                  >
-                    <option value="a_faire">À faire</option>
-                    <option value="en_cours">En cours</option>
-                    <option value="terminee">Terminée</option>
-                  </select>
-                )}
-              </div>
-            ))
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: '24px', maxWidth: '900px', margin: '0 auto' },
-  title: { color: '#2d3748', marginBottom: '8px' },
-  desc: { color: '#718096', marginBottom: '16px' },
-  info: { display: 'flex', gap: '24px', backgroundColor: 'white', padding: '16px', borderRadius: '8px', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
-  section: { backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' },
-  sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-  btnCreate: { backgroundColor: '#48bb78', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' },
-  form: { backgroundColor: '#f7fafc', padding: '16px', borderRadius: '8px', marginBottom: '16px' },
-  input: { width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '8px', boxSizing: 'border-box', fontSize: '14px' },
-  textarea: { width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '8px', boxSizing: 'border-box', fontSize: '14px' },
-  btnSubmit: { backgroundColor: '#4299e1', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' },
-  empty: { color: '#a0aec0', textAlign: 'center', padding: '20px' },
-  tacheCard: { border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', marginBottom: '12px' },
-  tacheHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  tacheTitre: { margin: 0, color: '#2d3748' },
-  badges: { display: 'flex', gap: '8px' },
-  badge: { padding: '2px 8px', borderRadius: '12px', color: 'white', fontSize: '12px' },
-  tacheDesc: { color: '#718096', fontSize: '14px', marginBottom: '8px' },
-  select: { padding: '6px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '14px' },
 };
 
 export default ProjetDetail;

@@ -37,25 +37,8 @@ class TacheSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_creation']
 
 
-class LivrableSerializer(serializers.ModelSerializer):
-    soumis_par_detail = UserMiniSerializer(source='soumis_par', read_only=True)
-
-    class Meta:
-        model = Livrable
-        fields = [
-            'id', 'titre', 'description', 'fichier_url',
-            'projet', 'soumis_par', 'soumis_par_detail',
-            'date_soumission'
-        ]
-        read_only_fields = ['date_soumission', 'soumis_par']
-
-
 class EvaluationSerializer(serializers.ModelSerializer):
     enseignant_detail = UserMiniSerializer(source='enseignant', read_only=True)
-    def validate_note(self, value):
-        if value < 0 or value > 20:
-            raise serializers.ValidationError("La note doit etre entre 0 et 20.")
-        return value
 
     class Meta:
         model = Evaluation
@@ -64,6 +47,25 @@ class EvaluationSerializer(serializers.ModelSerializer):
             'note', 'commentaire', 'date_evaluation'
         ]
         read_only_fields = ['date_evaluation', 'enseignant']
+
+    def validate_note(self, value):
+        if value < 0 or value > 20:
+            raise serializers.ValidationError("La note doit etre entre 0 et 20.")
+        return value
+
+
+class LivrableSerializer(serializers.ModelSerializer):
+    soumis_par_detail = UserMiniSerializer(source='soumis_par', read_only=True)
+    evaluation = EvaluationSerializer(read_only=True)
+
+    class Meta:
+        model = Livrable
+        fields = [
+            'id', 'titre', 'description', 'fichier_url',
+            'projet', 'soumis_par', 'soumis_par_detail',
+            'date_soumission', 'evaluation'
+        ]
+        read_only_fields = ['date_soumission', 'soumis_par']
 
 
 class ProjetSerializer(serializers.ModelSerializer):

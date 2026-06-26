@@ -1,177 +1,161 @@
-import React, { useState, useEffect } from 'react';
-import API from '../api';
-import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from "react";
+import API from "../api";
+import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 const Evaluations = () => {
   const [evaluations, setEvaluations] = useState([]);
   const [livrables, setLivrables] = useState([]);
-  const [livrableId, setLivrableId] = useState('');
-  const [note, setNote] = useState('');
-  const [commentaire, setCommentaire] = useState('');
+  const [livrableId, setLivrableId] = useState("");
+  const [note, setNote] = useState("");
+  const [commentaire, setCommentaire] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchEvaluations();
-    fetchLivrables();
-  }, []);
+  useEffect(() => { fetchEvaluations(); fetchLivrables(); }, []);
 
   const fetchEvaluations = async () => {
     try {
-      const res = await API.get('/evaluations/');
+      const res = await API.get("/evaluations/");
       setEvaluations(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const fetchLivrables = async () => {
     try {
-      const res = await API.get('/livrables/');
-      setLivrables(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+      const res = await API.get("/livrables/");
+      setLivrables(res.data.filter((l) => !l.evaluation));
+    } catch (err) { console.error(err); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post('/evaluations/', {
-        livrable: livrableId,
-        note: parseFloat(note),
-        commentaire,
-      });
-      setLivrableId('');
-      setNote('');
-      setCommentaire('');
-      setShowForm(false);
-      fetchEvaluations();
-    } catch (err) {
-      console.error(err);
-    }
+      await API.post("/evaluations/", { livrable: livrableId, note: parseFloat(note), commentaire });
+      setLivrableId(""); setNote(""); setCommentaire(""); setShowForm(false);
+      fetchEvaluations(); fetchLivrables();
+    } catch (err) { console.error(err); }
   };
 
-  const getNoteColor = (note) => {
-    if (note >= 16) return '#48bb78';
-    if (note >= 12) return '#4299e1';
-    if (note >= 10) return '#ed8936';
-    return '#e53e3e';
+  const getNoteStyle = (note) => {
+    if (note >= 16) return { color: "#43e97b", bg: "linear-gradient(135deg, #43e97b, #38f9d7)", label: "Tres bien" };
+    if (note >= 14) return { color: "#4facfe", bg: "linear-gradient(135deg, #4facfe, #00f2fe)", label: "Bien" };
+    if (note >= 12) return { color: "#a855f7", bg: "linear-gradient(135deg, #a855f7, #4facfe)", label: "Assez bien" };
+    if (note >= 10) return { color: "#f7971e", bg: "linear-gradient(135deg, #f7971e, #ffd200)", label: "Passable" };
+    return { color: "#f64f59", bg: "linear-gradient(135deg, #f64f59, #c0392b)", label: "Insuffisant" };
   };
 
   return (
-    <div>
+    <div style={{ minHeight: "100vh", background: "#0a0a1a" }}>
       <Navbar />
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>⭐ Évaluations</h1>
-          {(user?.role === 'enseignant' || user?.role === 'administrateur') && (
-            <button style={styles.btnCreate} onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Annuler' : '+ Nouvelle évaluation'}
+      <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+          <div>
+            <h1 style={{ color: "white", margin: 0, fontSize: "28px", fontWeight: "700" }}>Evaluations</h1>
+            <p style={{ color: "rgba(255,255,255,0.4)", margin: "4px 0 0", fontSize: "14px" }}>
+              {evaluations.length} evaluation{evaluations.length > 1 ? "s" : ""} enregistree{evaluations.length > 1 ? "s" : ""}
+            </p>
+          </div>
+          {(user?.role === "enseignant" || user?.role === "administrateur") && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              style={{ background: "linear-gradient(135deg, #a855f7, #4facfe)", color: "white", border: "none", padding: "12px 24px", borderRadius: "12px", cursor: "pointer", fontSize: "14px", fontWeight: "700", boxShadow: "0 8px 25px rgba(168,85,247,0.3)" }}
+            >
+              {showForm ? "Annuler" : "+ Nouvelle evaluation"}
             </button>
           )}
         </div>
 
         {showForm && (
-          <div style={styles.form}>
-            <h3>Évaluer un livrable</h3>
+          <div style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
+            <h3 style={{ color: "white", marginBottom: "20px" }}>Evaluer un livrable</h3>
             <form onSubmit={handleSubmit}>
               <select
-                style={styles.input}
                 value={livrableId}
                 onChange={(e) => setLivrableId(e.target.value)}
                 required
+                style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", marginBottom: "12px", boxSizing: "border-box", outline: "none" }}
               >
                 <option value="">-- Choisir un livrable --</option>
                 {livrables.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.titre} — {l.soumis_par_detail?.username}
-                  </option>
+                  <option key={l.id} value={l.id}>{l.titre} — {l.soumis_par_detail?.username}</option>
                 ))}
               </select>
               <input
-                style={styles.input}
                 type="number"
                 placeholder="Note (sur 20)"
-                min="0"
-                max="20"
-                step="0.5"
+                min="0" max="20" step="0.5"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 required
+                style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", marginBottom: "12px", boxSizing: "border-box", outline: "none" }}
               />
               <textarea
-                style={styles.textarea}
                 placeholder="Commentaire"
                 value={commentaire}
                 onChange={(e) => setCommentaire(e.target.value)}
                 rows={3}
+                style={{ width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "white", fontSize: "14px", marginBottom: "16px", boxSizing: "border-box", outline: "none", resize: "vertical" }}
               />
-              <button style={styles.btnSubmit} type="submit">
-                Enregistrer l'évaluation
+              <button
+                type="submit"
+                style={{ background: "linear-gradient(135deg, #a855f7, #4facfe)", color: "white", border: "none", padding: "12px 24px", borderRadius: "10px", cursor: "pointer", fontSize: "15px", fontWeight: "700" }}
+              >
+                Enregistrer l evaluation
               </button>
             </form>
           </div>
         )}
 
         {loading ? (
-          <p>Chargement...</p>
+          <p style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", padding: "60px" }}>Chargement...</p>
         ) : evaluations.length === 0 ? (
-          <div style={styles.empty}>
-            <p>Aucune évaluation enregistrée.</p>
+          <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.4)" }}>
+            <p style={{ fontSize: "48px", marginBottom: "16px" }}>⭐</p>
+            <p>Aucune evaluation enregistree.</p>
           </div>
         ) : (
-          <div style={styles.list}>
-            {evaluations.map((evaluation) => (
-              <div key={evaluation.id} style={styles.card}>
-                <div style={styles.cardHeader}>
-                  <h3 style={styles.cardTitle}>
-                    📄 Livrable #{evaluation.livrable}
-                  </h3>
-                  <span style={{
-                    ...styles.note,
-                    backgroundColor: getNoteColor(evaluation.note)
-                  }}>
-                    {evaluation.note}/20
-                  </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {evaluations.map((evaluation) => {
+              const nStyle = getNoteStyle(evaluation.note);
+              return (
+                <div key={evaluation.id} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "24px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ margin: "0 0 4px", color: "white", fontSize: "16px", fontWeight: "700" }}>
+                        Livrable #{evaluation.livrable}
+                      </h3>
+                      <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>
+                        Par {evaluation.enseignant_detail?.username}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                      <span style={{ background: nStyle.bg, color: "white", padding: "6px 16px", borderRadius: "20px", fontSize: "16px", fontWeight: "800" }}>
+                        {evaluation.note}/20
+                      </span>
+                      <span style={{ color: nStyle.color, fontSize: "12px", fontWeight: "600" }}>{nStyle.label}</span>
+                    </div>
+                  </div>
+                  {evaluation.commentaire && (
+                    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", padding: "12px 16px", marginBottom: "12px" }}>
+                      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", margin: 0, fontStyle: "italic" }}>
+                        "{evaluation.commentaire}"
+                      </p>
+                    </div>
+                  )}
+                  <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", margin: 0 }}>
+                    {new Date(evaluation.date_evaluation).toLocaleDateString("fr-FR")}
+                  </p>
                 </div>
-                <p style={styles.commentaire}>
-                  💬 {evaluation.commentaire || 'Aucun commentaire'}
-                </p>
-                <div style={styles.cardFooter}>
-                  <span>👨‍🏫 {evaluation.enseignant_detail?.username}</span>
-                  <span>📅 {new Date(evaluation.date_evaluation).toLocaleDateString('fr-FR')}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: '24px', maxWidth: '900px', margin: '0 auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },
-  title: { color: '#2d3748', margin: 0 },
-  btnCreate: { backgroundColor: '#805ad5', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '15px' },
-  form: { backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginBottom: '24px' },
-  input: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '15px', marginBottom: '12px', boxSizing: 'border-box' },
-  textarea: { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '15px', marginBottom: '12px', boxSizing: 'border-box' },
-  btnSubmit: { backgroundColor: '#805ad5', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '15px' },
-  empty: { textAlign: 'center', padding: '40px', color: '#718096' },
-  list: { display: 'flex', flexDirection: 'column', gap: '16px' },
-  card: { backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' },
-  cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' },
-  cardTitle: { margin: 0, color: '#2d3748' },
-  note: { color: 'white', padding: '4px 16px', borderRadius: '20px', fontWeight: 'bold', fontSize: '16px' },
-  commentaire: { color: '#718096', fontSize: '14px', marginBottom: '12px' },
-  cardFooter: { display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#4a5568' },
 };
 
 export default Evaluations;
